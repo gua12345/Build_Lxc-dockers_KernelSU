@@ -9,6 +9,9 @@ export ARCH=arm64
 KERNEL_CONFIG=vendor/apollo_user_defconfig
 KERNEL_NAME=${KERNEL_SOURCE##*/}
 
+#开启lxc
+ENABLE_LXC=true
+
 # 由GoogleSource提供的Clang编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs）
 CLANG_BRANCH=android11-release
 CLANG_VERSION=r365631c
@@ -195,6 +198,66 @@ GCC32_CUSTOM=false
 	tar -C gcc/$GCC32-32/ -zxvf gcc-$GCC32-32.tar.gz
 	rm -f gcc-$GCC32-32.tar.gz
 }
+
+[ "$ENABLE_LXC" = true ] && {
+# 定义你的工作目录
+ANDROID_KERNEL=$KERNEL_NAME-$KERNEL_SOURCE_BRANCH
+
+# 进行LXC配置
+
+echo "================================================================================"
+echo "开始进行lxc配置"
+echo "================================================================================" 
+cd $ANDROID_KERNEL
+[ -d  utils ] && {
+echo "================================================================================"
+echo "lxc已经配置过了"
+echo "================================================================================" 
+echo "当前目录：$(pwd)"
+}
+[ ! -d  utils ] && {
+git clone https://github.com/tomxi1997/lxc-docker-support-for-android.git utils
+echo 'source "utils/Kconfig"' >> "Kconfig"
+echo "克隆 lxc-docker-support-for-android 到 utils 目录并更新 Kconfig 文件"
+
+chmod -R 777 utils
+echo "为所有文件添加执行权限"
+
+echo "CONFIG_DOCKER=y" >> arch/$ARCH/configs/$KERNEL_CONFIG
+echo "更新配置文件：arch/$ARCH/configs/$KERNEL_CONFIG，添加 CONFIG_DOCKER=y"
+
+sed -i '/CONFIG_ANDROID_PARANOID_NETWORK/d' arch/$ARCH/configs/$KERNEL_CONFIG
+echo "# CONFIG_ANDROID_PARANOID_NETWORK is not set" >> arch/$ARCH/configs/$KERNEL_CONFIG
+echo "更新配置文件：arch/$ARCH/configs/$KERNEL_CONFIG，禁用 CONFIG_ANDROID_PARANOID_NETWORK"
+echo "当前目录：$(pwd)"
+
+[ -f kernel/cgroup/cgroup.c ] && {
+    sh utils/runcpatch.sh kernel/cgroup/cgroup.c
+    echo "运行 runcpatch.sh 脚本"
+    echo "当前目录：$(pwd)"
+    }
+
+
+[ -f kernel/cgroup.c ] && {
+    sh utils/runcpatch.sh kernel/cgroup.c
+    echo "运行 runcpatch.sh 脚本"
+    echo "当前目录：$(pwd)"
+    }
+
+
+[ -f net/netfilter/xt_qtaguid.c ] && {
+    patch -p0 < utils/xt_qtaguid.patch
+    echo "应用 xt_qtaguid.patch 补丁"
+    echo "当前目录：$(pwd)"
+    }
+}
+
+echo "================================================================================"
+echo "lxc配置结束"
+echo "================================================================================" 
+cd ..
+}
+
 
 cd $KERNEL_NAME-$KERNEL_SOURCE_BRANCH
 echo "================================================================================" && num="" && SUMODE=""
