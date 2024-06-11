@@ -1,22 +1,23 @@
 BULID_KERNEL_DIR=`pwd`
 # 内核开源仓库地址
-KERNEL_SOURCE=https://github.com/dsunnerer/kernel_apollo
+KERNEL_SOURCE=https://github.com/gua12345/kernel_oppo_sm8250.git
 # 仓库分支
-KERNEL_SOURCE_BRANCH=ten
+KERNEL_SOURCE_BRANCH=lineage-18.1
 # CPU类型
 export ARCH=arm64
 # 配置文件
-KERNEL_CONFIG=vendor/apollo_user_defconfig
+KERNEL_CONFIG=op4a79_defconfig
 KERNEL_NAME=${KERNEL_SOURCE##*/}
-
 #开启lxc
 ENABLE_LXC=true
+#开启kali-nethuner
+ENABLE_NETHUNTER=true
 
 # 由GoogleSource提供的Clang编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs）
-CLANG_BRANCH=android11-release
-CLANG_VERSION=r365631c
+CLANG_BRANCH=android-11.0.0_r3
+CLANG_VERSION=r377782c
 # 由GoogleSource提供的64位Gcc编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+refs）
-GCC64=android10-release
+GCC64=android-13.0.0_r0.130
 # 由GoogleSource提供的32位Gcc编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+refs）
 GCC32=
 
@@ -29,7 +30,7 @@ CROSS_COMPILE=aarch64-linux-androidkernel-
 
 # 原始boot.img文件下载地址（可以从卡刷包或线刷包里提取，重命名为boot-source.img放到本脚本所在目录下）
 SOURCE_BOOT_IMAGE_NEED_DOWNLOAD=false
-SOURCE_BOOT_IMAGE=ftp://192.168.1.1/boot.img
+SOURCE_BOOT_IMAGE=https://github.com/gua12345/LXC-DOCKER-KernelSU_Action/releases/download/sh/boot.img
 
 # kprobe集成方案需要修改的参数（每个内核仓库需要开启的选项不统一，有的机型可能全都不用开，请自行逐个测试，第一个和第二个一般需要开）：
 ADD_OVERLAYFS_CONFIG=true
@@ -199,16 +200,17 @@ GCC32_CUSTOM=false
 	rm -f gcc-$GCC32-32.tar.gz
 }
 
-[ "$ENABLE_LXC" = true ] && {
 # 定义你的工作目录
 ANDROID_KERNEL=$KERNEL_NAME-$KERNEL_SOURCE_BRANCH
+
+[ "$ENABLE_LXC" = true ] && {
 
 # 进行LXC配置
 
 echo "================================================================================"
 echo "开始进行lxc配置"
 echo "================================================================================" 
-cd $ANDROID_KERNEL
+cd $ANDROID_KERNEL || { echo "切换目录失败，终止脚本"; exit 1; }
 [ -d  utils ] && {
 echo "================================================================================"
 echo "lxc已经配置过了"
@@ -216,38 +218,38 @@ echo "==========================================================================
 echo "当前目录：$(pwd)"
 }
 [ ! -d  utils ] && {
-git clone https://github.com/tomxi1997/lxc-docker-support-for-android.git utils
-echo 'source "utils/Kconfig"' >> "Kconfig"
-echo "克隆 lxc-docker-support-for-android 到 utils 目录并更新 Kconfig 文件"
+git clone https://github.com/tomxi1997/lxc-docker-support-for-android.git utils || { echo "==========下载失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+echo 'source "utils/Kconfig"' >> "Kconfig" || { echo "==========添加配置失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+echo "==========克隆 lxc-docker-support-for-android 到 utils 目录并更新 Kconfig 文件=========="
 
 chmod -R 777 utils
-echo "为所有文件添加执行权限"
+echo "==========所有文件添加执行权限=========="
 
-echo "CONFIG_DOCKER=y" >> arch/$ARCH/configs/$KERNEL_CONFIG
-echo "更新配置文件：arch/$ARCH/configs/$KERNEL_CONFIG，添加 CONFIG_DOCKER=y"
+echo "CONFIG_DOCKER=y" >> arch/$ARCH/configs/$KERNEL_CONFIG || { echo "==========添加配置失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+echo "==========更新配置文件：arch/$ARCH/configs/$KERNEL_CONFIG，添加 CONFIG_DOCKER=y=========="
 
-sed -i '/CONFIG_ANDROID_PARANOID_NETWORK/d' arch/$ARCH/configs/$KERNEL_CONFIG
-echo "# CONFIG_ANDROID_PARANOID_NETWORK is not set" >> arch/$ARCH/configs/$KERNEL_CONFIG
-echo "更新配置文件：arch/$ARCH/configs/$KERNEL_CONFIG，禁用 CONFIG_ANDROID_PARANOID_NETWORK"
+sed -i '/CONFIG_ANDROID_PARANOID_NETWORK/d' arch/$ARCH/configs/$KERNEL_CONFIG || { echo "==========添加配置失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+echo "# CONFIG_ANDROID_PARANOID_NETWORK is not set" >> arch/$ARCH/configs/$KERNEL_CONFIG || { echo "==========添加配置失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+echo "==========更新配置文件：arch/$ARCH/configs/$KERNEL_CONFIG，禁用 CONFIG_ANDROID_PARANOID_NETWORK=========="
 echo "当前目录：$(pwd)"
 
 [ -f kernel/cgroup/cgroup.c ] && {
-    sh utils/runcpatch.sh kernel/cgroup/cgroup.c
-    echo "运行 runcpatch.sh 脚本"
+    sh utils/runcpatch.sh kernel/cgroup/cgroup.c || { echo "==========运行runcpatch.sh失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========运行 runcpatch.sh 脚本==========" 
     echo "当前目录：$(pwd)"
     }
 
 
 [ -f kernel/cgroup.c ] && {
-    sh utils/runcpatch.sh kernel/cgroup.c
-    echo "运行 runcpatch.sh 脚本"
+    sh utils/runcpatch.sh kernel/cgroup.c || { echo "==========运行runcpatch.sh失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========运行 runcpatch.sh 脚本=========="
     echo "当前目录：$(pwd)"
     }
 
 
 [ -f net/netfilter/xt_qtaguid.c ] && {
-    patch -p0 < utils/xt_qtaguid.patch
-    echo "应用 xt_qtaguid.patch 补丁"
+    patch -p0 < utils/xt_qtaguid.patch || { echo "==========应用 补丁失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========应用 xt_qtaguid.patch 补丁=========="
     echo "当前目录：$(pwd)"
     }
 }
@@ -255,6 +257,42 @@ echo "当前目录：$(pwd)"
 echo "================================================================================"
 echo "lxc配置结束"
 echo "================================================================================" 
+cd ..
+}
+
+[ "$ENABLE_NETHUNTER" == "true" ] && {
+echo "================================================================================"
+echo "开始进行kali-nethunter配置"
+echo "================================================================================" 
+cd $ANDROID_KERNEL
+[ -d  kali-nethunter_patches ] && {
+echo "================================================================================"
+echo "kali-nethunter已经配置过了"
+echo "================================================================================" 
+echo "当前目录：$(pwd)"
+}
+# 检查是否启用了 Kali-Nethunter
+[ ! -d  kali-nethunter_patches ] && {
+    git clone https://github.com/tomxi1997/kali-nethunter_patches.git || { echo "==========下载失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    chmod -R 777 kali-nethunter_patches
+    echo "==========为所有文件添加执行权限=========="
+    patch -p1 < kali-nethunter_patches/add-rtl88xxau-5.6.4.2-drivers.patch || { echo "==========应用 补丁失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========应用了第一个补丁=========="
+    patch -p1 < kali-nethunter_patches/add-wifi-injection-4.14.patch || { echo "==========应用 补丁失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========应用了第二个补丁=========="
+    patch -p1 < kali-nethunter_patches/fix-ath9k-naming-conflict.patch || { echo "==========应用 补丁失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========应用了第三个补丁=========="
+    sleep 8
+    git clone https://github.com/Biohazardousrom/Kali-defconfig-checker.git kali || { echo "==========下载失败，终止脚本==========" && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    chmod -R 777 kali
+    echo "==========为所有文件添加执行权限=========="
+    cd kali
+    ./check-kernel-config $ANDROID_KERNEL/arch/$ARCH/configs/$KERNEL_CONFIG -w || { echo "==========检查配置失败，终止脚本==========" && cd .. && cd .. && rm -rf $ANDROID_KERNEL; exit 1; }
+    echo "==========检查配置完成=========="
+    echo "================================================================================"
+    echo "kali-nethunter配置完成"
+    echo "================================================================================" 
+	}
 cd ..
 }
 
