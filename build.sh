@@ -11,7 +11,8 @@ KERNEL_NAME=${KERNEL_SOURCE##*/}
 #开启lxc
 ENABLE_LXC=true
 #开启kali-nethuner
-ENABLE_NETHUNTER=true
+#ENABLE_NETHUNTER=true
+#目前只能帮你自动刷入补丁，后面的还需要自己研究
 
 # 由GoogleSource提供的Clang编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs）
 CLANG_BRANCH=android-11.0.0_r3
