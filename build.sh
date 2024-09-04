@@ -14,12 +14,15 @@ ENABLE_LXC=true
 #ENABLE_NETHUNTER=true
 #目前只能帮你自动刷入补丁，后面的还需要自己研究
 
-# 由GoogleSource提供的Clang编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs）
+#安卓谷歌源代理,有代理的话就自己换
+AndroidGooglesourceProxy=android.googlesource.com
+
+# 由GoogleSource提供的Clang编译器（到这里查找：https://Android.Googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs）
 CLANG_BRANCH=android-11.0.0_r3
 CLANG_VERSION=r377782c
-# 由GoogleSource提供的64位Gcc编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+refs）
+# 由GoogleSource提供的64位Gcc编译器（到这里查找：https://Android.Googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+refs）
 GCC64=android-13.0.0_r0.130
-# 由GoogleSource提供的32位Gcc编译器（到这里查找：https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+refs）
+# 由GoogleSource提供的32位Gcc编译器（到这里查找：https://Android.Googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+refs）
 GCC32=
 
 # 编译时使用的指令
@@ -116,7 +119,7 @@ GCC32_CUSTOM=false
 	echo "================================================================================"
 	echo "准备下载 IMG 解包、打包工具"
 	echo "================================================================================" && read -t 1
-	git clone https://android.googlesource.com/platform/system/tools/mkbootimg img_repack_tools -b master-kernel-build-2022 --depth=1
+	git clone https://$AndroidGooglesourceProxy/platform/system/tools/mkbootimg img_repack_tools -b master-kernel-build-2022 --depth=1
 	[ "$?" != 0 ] && {
 		echo "================================================================================"
 		echo "本次编译中止！原因：IMG 解包、打包工具下载失败"
@@ -152,9 +155,9 @@ GCC32_CUSTOM=false
 	echo "================================================================================"
 	echo "准备下载 Clang 编译器"
 	echo "================================================================================" && read -t 1
-	wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/$CLANG_BRANCH/clang-$CLANG_VERSION.tar.gz
+	wget https://$AndroidGooglesourceProxy/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/$CLANG_BRANCH/clang-$CLANG_VERSION.tar.gz
 	[ "$?" != 0 ] && {
-		wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/$CLANG_BRANCH/clang-$CLANG_VERSION.tar.gz
+		wget https://$AndroidGooglesourceProxy/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/$CLANG_BRANCH/clang-$CLANG_VERSION.tar.gz
 		[ "$?" != 0 ] && {
 			echo "================================================================================" && rm -f clang-$CLANG_VERSION.tar.gz
 			echo "本次编译中止！原因：Clang 编译器下载失败"
@@ -170,9 +173,9 @@ GCC32_CUSTOM=false
 	echo "================================================================================"
 	echo "准备下载 64 位 GCC 交叉编译器"
 	echo "================================================================================" && read -t 1
-	wget -O gcc-$GCC64-64.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/heads/$GCC64.tar.gz
+	wget -O gcc-$GCC64-64.tar.gz https://$AndroidGooglesourceProxy/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/heads/$GCC64.tar.gz
 	[ "$?" != 0 ] && {
-		wget -O gcc-$GCC64-64.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/$GCC64.tar.gz
+		wget -O gcc-$GCC64-64.tar.gz https://$AndroidGooglesourceProxy/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/$GCC64.tar.gz
 		[ "$?" != 0 ] && {
 			echo "================================================================================" && rm -f gcc-$GCC64-64.tar.gz
 			echo "本次编译中止！原因：64 位 GCC 交叉编译器下载失败"
@@ -187,9 +190,9 @@ GCC32_CUSTOM=false
 	echo "================================================================================"
 	echo "准备下载 32 位 GCC 交叉编译器"
 	echo "================================================================================" && read -t 1
-	wget -O gcc-$GCC32-32.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/heads/$GCC32.tar.gz
+	wget -O gcc-$GCC32-32.tar.gz https://$AndroidGooglesourceProxy/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/heads/$GCC32.tar.gz
 	[ "$?" != 0 ] && {
-		wget -O gcc-$GCC32-32.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/$GCC32.tar.gz
+		wget -O gcc-$GCC32-32.tar.gz https://$AndroidGooglesourceProxy/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/$GCC32.tar.gz
 		[ "$?" != 0 ] && {
 			echo "================================================================================" && rm -f gcc-$GCC32-32.tar.gz
 			echo "本次编译中止！原因：32 位 GCC 交叉编译器下载失败"
